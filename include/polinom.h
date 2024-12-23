@@ -8,15 +8,15 @@ using namespace std;
 template <class T>
 struct Node
 {
-	T value;
-	Node* next;
-	Node (T val1, Node* p): value(val1),next(p){}
+    T value;
+    Node* next;
+    Node(T val1, Node* p) : value(val1), next(p) {}
 };
 
 template <class T>
 class List {
-	Node<T> *first; //first ук-ль на первое звено
-    Node<T> *last;
+    Node<T>* first; //first ук-ль на первое звено
+    Node<T>* last;
 public:
     List() : first(nullptr) {}
     ~List() {
@@ -28,9 +28,9 @@ public:
     }
     //  онструктор копировани€
     List(const List<T>& other) : first(nullptr), last(nullptr) {
-        Node<T>* current = other.first; 
+        Node<T>* current = other.first;
         while (current != nullptr) {
-            Insert(current->value); 
+            Insert(current->value);
             current = current->next;
         }
     }
@@ -47,16 +47,64 @@ public:
             first = nullptr;
             last = nullptr;
             //  опируем элементы из другого списка
-            Node<T>* current = other.first; 
-            while (current != nullptr) { 
-                Insert(current->value); 
-                current = current->next; 
+            Node<T>* current = other.first;
+            while (current != nullptr) {
+                Insert(current->value);
+                current = current->next;
             }
         }
-        return *this; 
+        return *this;
     }
-    
-    void Insert( T value) {  // добавление элемента в упор€доченном пор€дке
+
+    void InsertCurr(Node<T>* prev, Node<T>* curr, T value) {  // добавление элемента между prev и curr
+        Node<T>* p = new Node<T>(value, nullptr);
+        if (first == nullptr) {  // ≈сли список пуст
+            first = p;
+            last = p;
+            return;
+        }
+        // ≈сли добавл€етс€ в начало
+        if (prev == nullptr) {
+            p->next = first;
+            first = p;
+            return;
+        }
+        // ≈сли добавл€етс€ в конец
+        if (curr == nullptr) {
+            p->next = nullptr;
+            last->next = p;
+            last = p;
+            return;
+        }
+        // последний вариант - добавл€ение в середину, между prev и curr
+        prev->next = p;
+        p->next = curr;
+    }
+
+    void DeleteCurr(Node<T>* prev, Node<T>* curr) {  // удаление curr
+        Node<T>* p;
+        if (first == last) {  // ≈сли список пуст
+            delete curr;
+            first = last = nullptr;
+            return;
+        }
+        // ≈сли удал€етс€ первый
+        if (prev == nullptr) {
+            p = first;
+            first = first->next;
+            delete p;
+            return;
+        }
+        // удаление любого другого
+        if (curr != nullptr) {
+            p = curr;
+            prev->next = curr->next;
+            delete p;
+            return;
+        }
+    }
+
+    void Insert(T value) {  // добавление элемента в упор€доченном пор€дке
         Node<T>* p = new Node<T>(value, nullptr);
         if (first == nullptr) {  // ≈сли список пуст
             first = p;
@@ -85,8 +133,8 @@ public:
     /*void Insert(T val) {  //просто добавл€ем
         Node<T>* p = new Node<T>(val, nullptr);
         if (first == nullptr) { // ≈сли список пуст
-            first = p;  
-            last = p;   
+            first = p;
+            last = p;
         }
         else { // ≈сли список не пуст
             last->next = p; // ”казываем, что текущий последний элемент ссылаетс€ на новый
@@ -103,17 +151,17 @@ public:
         cout << p->value; //печать послед.
     }
 
-    Node<T>* getFirst() { 
-        return first; 
+    Node<T>* getFirst() {
+        return first;
     }
 };
 
 class Polynom
 {
-	List <Monom> p;
+    List <Monom> p;
 public:
     Polynom() {}
-     
+
     Polynom(const string& s) {  //3x1y2z1 + 2x2y2z1
         size_t i = 0;
         while (i < s.length()) {
@@ -138,35 +186,46 @@ public:
     }
 
     Polynom operator+(Polynom& other) {   //"3x1y2z1 + 2x2y2z1" + "3x1y2z1 + 2x2y2z3"
-        Polynom res;
-        Node<Monom>* currentA = p.getFirst();
-        Node<Monom>* currentB = other.p.getFirst();
-        while (currentA != nullptr && currentB != nullptr) {
-            if (currentA->value < currentB->value) {
-                res.p.Insert(currentA->value);
-                currentA = currentA->next;
+        Polynom res = other;
+        Node<Monom>* currA = p.getFirst();
+        Node<Monom>* prevA = nullptr;
+        Node<Monom>* currB = res.p.getFirst();
+        Node<Monom>* prevB = nullptr;
+
+        while (currA != nullptr && currB != nullptr){
+            if (currA->value < currB->value) {
+                res.p.InsertCurr(prevB, currB, currA->value);
+                prevA = currA;
+                currA = currA->next;
             }
-            else if (currentB->value < currentA->value) {
-                res.p.Insert(currentB->value);
-                currentB = currentB->next;
+            else if (currB->value < currA->value) {
+                prevB = currB;
+                currB = currB->next;
             }
             else { // —тепени совпадают, нужно сложить их
-                Monom combinedMonom = currentA->value + currentB->value;
-                if (combinedMonom.getCoeff() != 0) {
-                    res.p.Insert(combinedMonom);
+                currB->value = currB->value + currA->value;
+                if (currB->value == 0) {
+                    //удалить currB
+                    res.p.DeleteCurr(prevB, currB);
+                    currB = prevB->next;
+                    //передвинуть currA
+                    prevA = currA;
+                    currA = currA->next;
                 }
-                currentA = currentA->next;
-                currentB = currentB->next;
+                else
+                {
+                    prevA = currA;
+                    currA = currA->next;
+                    prevB = currB;
+                    currB = currB->next;
+                }
             }
         }
         // ƒобавл€ем оставшиес€ мономы, если они есть
-        while (currentA != nullptr) {
-            res.p.Insert(currentA->value);
-            currentA = currentA->next;
-        }
-        while (currentB != nullptr) {
-            res.p.Insert(currentB->value);
-            currentB = currentB->next;
+        while (currA != nullptr) {
+            res.p.InsertCurr(prevB, currB, currA->value);
+            currA = currA->next;
+            prevB = prevB->next;
         }
         return res;
     }
@@ -220,7 +279,7 @@ public:
         }
         return res;
     }
-    
+
     Polynom operator*(Polynom& other) {
         Polynom res;
         Node<Monom>* currentA = p.getFirst();
@@ -232,7 +291,3 @@ public:
         return res;
     }
 };
-
-
-
-
