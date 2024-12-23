@@ -55,8 +55,34 @@ public:
         }
         return *this; 
     }
+    
+    void Insert( T value) {  // добавление элемента в упорядоченном порядке
+        Node<T>* p = new Node<T>(value, nullptr);
+        if (first == nullptr) {  // Если список пуст
+            first = p;
+            last = p;
+            return;
+        }
+        // Если добавляемый элемент меньше первого элемента
+        if (value < first->value) {
+            p->next = first;
+            first = p;
+            return;
+        }
+        // Найдем позицию для вставки
+        Node<T>* current = first;
+        while (current->next != nullptr && current->next->value < value) {
+            current = current->next;
+        }
+        p->next = current->next;
+        current->next = p;
+        // Обновляем указатель на последний узел
+        if (p->next == nullptr) {
+            last = p;
+        }
+    }
 
-    void Insert(T val) {
+    /*void Insert(T val) {  //просто добавляем
         Node<T>* p = new Node<T>(val, nullptr);
         if (first == nullptr) { // Если список пуст
             first = p;  
@@ -66,7 +92,7 @@ public:
             last->next = p; // Указываем, что текущий последний элемент ссылается на новый
             last = p;       // Обновляем указатель на последний элемент
         }
-    }
+    }*/
 
     void print() {
         Node<T>* p = first;
@@ -88,7 +114,7 @@ class Polynom
 public:
     Polynom() {}
      
-    Polynom(const string& s) {  //3x1y2z1 + 3x1y2z1
+    Polynom(const string& s) {  //3x1y2z1 + 2x2y2z1
         size_t i = 0;
         while (i < s.length()) {
             size_t start = i;
@@ -111,7 +137,41 @@ public:
         cout << endl;
     }
 
-    Polynom operator+(Polynom& other)  {  //  "3x1y2z1 + 2x2y2z1" + "3x1y2z1 + 2x2y2z3"
+    Polynom operator+(Polynom& other) {   //"3x1y2z1 + 2x2y2z1" + "3x1y2z1 + 2x2y2z3"
+        Polynom res;
+        Node<Monom>* currentA = p.getFirst();
+        Node<Monom>* currentB = other.p.getFirst();
+        while (currentA != nullptr && currentB != nullptr) {
+            if (currentA->value < currentB->value) {
+                res.p.Insert(currentA->value);
+                currentA = currentA->next;
+            }
+            else if (currentB->value < currentA->value) {
+                res.p.Insert(currentB->value);
+                currentB = currentB->next;
+            }
+            else { // Степени совпадают, нужно сложить их
+                Monom combinedMonom = currentA->value + currentB->value;
+                if (combinedMonom.getCoeff() != 0) {
+                    res.p.Insert(combinedMonom);
+                }
+                currentA = currentA->next;
+                currentB = currentB->next;
+            }
+        }
+        // Добавляем оставшиеся мономы, если они есть
+        while (currentA != nullptr) {
+            res.p.Insert(currentA->value);
+            currentA = currentA->next;
+        }
+        while (currentB != nullptr) {
+            res.p.Insert(currentB->value);
+            currentB = currentB->next;
+        }
+        return res;
+    }
+    //старое сложение полиномов( для неупорядоченного списка)
+    /*Polynom operator+(Polynom& other) {  //  "3x1y2z1 + 2x2y2z1" + "3x1y2z1 + 2x2y2z3"
         Polynom res;
         Node<Monom>* currentA = p.getFirst();
         Node<Monom>* currentB = other.p.getFirst();
@@ -149,7 +209,7 @@ public:
             currentB = currentB->next;
         }
         return res;
-    }
+    }*/
     Polynom operator*(Monom& m) {
         Polynom res;
         Node<Monom>* currentA = p.getFirst();
@@ -166,10 +226,8 @@ public:
         Node<Monom>* currentA = p.getFirst();
         while (currentA != nullptr) {
             Polynom newPoly = other * currentA->value;
-            res = res + newPoly; // Добавляем результат в результирующий полином
-            
+            res = res + newPoly;
             currentA = currentA->next;
-            
         }
         return res;
     }
@@ -178,42 +236,3 @@ public:
 
 
 
-
-
-
-
-
-
-
-
-/*
-    Polynom operator*(Polynom& other) {
-        Polynom res;
-        Node<Monom>* currentA = p.getFirst();
-        Node<Monom>* currentB = other.p.getFirst();
-        while (currentA != nullptr) {
-            while (currentB != nullptr) {
-                Monom newMonom = currentA->value * currentB->value;
-                // Проверяем, есть ли уже моном с такими степенями в результирующем полиноме
-                int flag = 0;
-                Node<Monom>* resCurrent = res.p.getFirst();
-                while (resCurrent != nullptr) {
-                    if (resCurrent->value.getPowX() == newMonom.getPowX() &&
-                        resCurrent->value.getPowY() == newMonom.getPowY() &&
-                        resCurrent->value.getPowZ() == newMonom.getPowZ()) {
-                        // Если найден, суммируем коэффициенты
-                        Monom newMonom = resCurrent->value + currentB->value;
-                        flag = 1;
-                        break;
-                    }
-                    resCurrent = resCurrent->next;
-                }
-                // Если моном не найден, добавляем в результат
-                if (flag != 1) {
-                    res.p.Insert(newMonom);
-                }
-                currentB = currentB->next;
-            }
-        }
-        return res;
-    }*/

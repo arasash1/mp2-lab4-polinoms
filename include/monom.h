@@ -78,6 +78,28 @@ public:
 		return (coeff == m.coeff && pow_x == m.pow_x && pow_y == m.pow_y && pow_z == m.pow_z);
 	}
 
+    // Сравнение по сумме степеней, затем по коэффициентам
+    bool operator<(const Monom& m) const {
+        if (pow_x + pow_y + pow_z != m.pow_x + m.pow_y + m.pow_z) {
+            return (pow_x + pow_y + pow_z) < (m.pow_x + m.pow_y + m.pow_z);
+        }
+        // Если степени одинаковые, сравниваем коэффициенты
+        return coeff < m.coeff;
+    }
+
+    /*bool operator<(const Monom& m) const {    //("3x1y2z1 + 2x2y2z1")
+        if (pow_x != m.pow_x) {
+            return pow_x < m.pow_x; 
+        }
+        if (pow_y != m.pow_y) {
+            return pow_y < m.pow_y; 
+        }
+        if (pow_z != m.pow_z) {
+            return pow_z < m.pow_z; 
+        }
+        return coeff < m.coeff; // Наконец, сравниваем коэффициенты
+    }*/
+
     friend ostream& operator<<(ostream& ostr, const Monom& m)
     {
         ostr << "Коэффициент: " << m.coeff << ' ';
